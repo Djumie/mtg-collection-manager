@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: mtg-collection-manager
+
+    # Database configuration
+    datasource:
+      url: jdbc:mysql://localhost:3306/mtg_collector?useSSL=false&serverTimezone=UTC
+      username: mtg_user
+      password: mtg_password
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+    # JPA/Hibernate configuration
+    jpa:
+      hibernate:
+        ddl-auto: update # Creates/updates tables automatically
+        naming:
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandard
+      show-sql: true       # Shows SQL in console
+      properties:
+        hibernate:
+          format_sql: true  # Makes SQL readable
+          dialect: org.hibernate.dialect.MySQL8Dialect
+          generate_statistics: true #Helps with performance monitoring
+
+    # Development profile
+    profiles:
+      active: dev
+
+    # Logging configuration
+    logging:
+      level:
+        com.mtgcollector: DEBUG
+        org.hibernate.SQL: DEBUG
+        org.springframework.security: DEBUG
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+    # Custom application properties
+    mtg-collector:
+      api:
+        base-url: http://localhost:8080/api
+      database:
+        max-connections: 10
