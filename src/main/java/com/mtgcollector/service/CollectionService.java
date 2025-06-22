@@ -1,19 +1,18 @@
 package com.mtgcollector.service;
 
-import com.mtgcollector.dto.AddCardToCollectionDto;
 import com.mtgcollector.dto.CollectionEntryDto;
-import com.mtgcollector.model.Card;
-import com.mtgcollector.model.CollectionEntry;
-import com.mtgcollector.model.User;
+import com.mtgcollector.entity.Card;
+import com.mtgcollector.entity.CollectionEntry;
+import com.mtgcollector.entity.User;
+import com.mtgcollector.exception.CardNotFoundException;
+import com.mtgcollector.exception.UserNotFoundException;
 import com.mtgcollector.repository.CardRepository;
 import com.mtgcollector.repository.CollectionEntryRepository;
 import com.mtgcollector.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.smartcardio.CardNotPresentException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -22,54 +21,15 @@ import java.util.stream.Collectors;
 @Transactional      // Ensures database consistency across multiple operations
 public class CollectionService {
 
-    @Autowired
-    private CollectionEntryRepository collectionRepository;
+    private final CollectionEntryRepository collectionRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private CardRepository cardRepository;
-
-    public CollectionEntryDto addCardToCollection(String username, AddCardToCollectionDto dto) {
-        // Business rule: Only authenticated users can add to their collection
-        // Find user
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-
-        // Find card
-        Card card = cardRepository.findById(dto.getCardId())
-                .orElseThrow(() -> new CardNotPresentException("Card not found with id: " + dto.getCardId()));
-
-        // Business rule: If card already exists in collection, update quantity instead of creating duplicate
-        // Check if card already exists in collection
-        Optional<CollectionEntry> existingEntry = collectionRepository.findByUserAndCard(user, card);
-
-        if (existingEntry.isPresent()) {
-            // Update existing entry
-            CollectionEntry entry = existingEntry.get();
-            entry.setQuantity(entry.getQuantity() + dto.getQuantity());
-            entry.setCondition(dto.getCondition());
-            entry.setNotes(dto.getNotes());
-            entry = collectionRepository.save(entry);
-            return convertToDto(entry);
-        } else {
-            // Create new entry
-            CollectionEntry newEntry = new CollectionEntry();
-            newEntry.setUser(user);
-            newEntry.setCard(card);
-            newEntry.setQuantity(dto.getQuantity());
-            newEntry.setCondition(dto.getCondition());
-            newEntry.setNotes(dto.getNotes());
-
-            newEntry = collectionRepository.save(newEntry);
-            return convertToDto(newEntry);
-        }
-    }
+    private final CardRepository cardRepository;
 
     public List<CollectionEntryDto> getUserCollection(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
 
         List<CollectionEntry> entries = collectionRepository.findByUserOrderByAddedAtDesc(user);
         return entries.stream()
@@ -77,16 +37,60 @@ public class CollectionService {
                 .collect(Collectors.toList());
     }
 
-    public void removeCardFromCollection(String username, Long cardId) {
+    public CollectionEntryDto addCardToCollection(String username, Long cardId, CollectionEntryDto.AddCardToCollectionDto dto) {
+        // Business rule: Only authenticated users can add to their collection
+        // Find user
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
 
-        Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new CardNotPresentException("Card not found: " + cardId));
+        // Find card
+        Card card = cardRepository.findById(dto.getCardId())
+                .orElseThrow(() -> new CardNotFoundException("Card not found with id: " + dto.getCardId()));
 
-        com.mtgcollector.dto.CollectionEntry entry = collectionRepository.findByUserAndCard(user, card).orElseThrow(() -> new CollectionEntryNotFoundException("Card not found in user's collection"));
+        // Business rule: If card already exists in collection, update quantity instead of creating duplicate
+        // Check if card already exists in collection
+        Optional<CollectionEntry> existingEntry = collectionRepository.findByUserAndCard(user, card);
+
+        CollectionEntry entry;
+        if (existingEntry.isPresent()) {
+            // Update existing entry
+            entry = existingEntry.get();
+            entry.setQuantity(entry.getQuantity() + dto.getQuantity());
+            entry.setCondition(dto.getCondition());
+            entry.setNotes(dto.getNotes());
+        } else {
+            // Create new entry
+            entry = new CollectionEntry();
+            entry.setUser(user);
+            entry.setCard(card);
+            entry.setQuantity(dto.getQuantity());
+            entry.setCondition(dto.getCondition());
+            entry.setNotes(dto.getNotes());
+        }
+
+        entry = collectionRepository.save(entry);
+        return convertToDto(entry);
+    }
+
+    public void removeCardFromCollection(String username, Long entryId) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
+
+        CollectionEntry entry = collectionRepository.findById(entryId)
+                .orElseThrow(() -> new RuntimeException("Card not found in user's collection"));
+
+        if (!entry.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Access denied");
+        }
 
         collectionRepository.delete(entry);
+    }
+
+    public BigDecimal getCollectionValue(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
+
+        return collectionRepository.calculateCollectionValue(user);
     }
 
     // Convert entity to DTO to avoid exposing internal database structure
@@ -101,6 +105,17 @@ public class CollectionService {
         dto.setCondition(entry.getCondition());
         dto.setNotes(entry.getNotes());
         dto.setAddedAt(entry.getAddedAt());
+
+        if (entry.getCard().getMarketPrice() != null) {
+            dto.setTotalValue(entry.getCard().getMarketPrice().multiply(new BigDecimal(entry.getQuantity())));
+        }
         return dto;
+    }
+
+    // Single constructor
+    public CollectionService(CollectionEntryRepository collectionRepository, UserRepository userRepository, CardRepository cardRepository) {
+        this.collectionRepository = collectionRepository;
+        this.userRepository = userRepository;
+        this.cardRepository = cardRepository;
     }
 }

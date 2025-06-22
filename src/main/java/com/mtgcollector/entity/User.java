@@ -1,15 +1,9 @@
-package com.mtgcollector.model;
+package com.mtgcollector.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import jakarta.annotation.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.engine.spi.CollectionEntry;
-import org.hibernate.mapping.FetchProfile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,6 +25,13 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "role")
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.USER;
+
     @CreationTimestamp
     private LocalDateTime getGetUpdateAt;
 
@@ -39,11 +40,18 @@ public class User {
 
     // One user can have many collections entries
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<CollectionEntry> collections = new ArrayList<>();
+    private List<CollectionEntry> collectionsEntries = new ArrayList<>();
 
-    // Constructors, getters, and setters
-    public User() {}
-    public User(String username, String password, String email) {
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    // Constructors
+
+
+    public User(Long id, String username, String password, String email) {
+        this.id = id;
         this.username = username;
         this.password = password;
         this.email = email;
@@ -82,6 +90,22 @@ public class User {
         this.email = email;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
     public LocalDateTime getGetGetUpdateAt() {
         return getGetUpdateAt;
     }
@@ -97,4 +121,16 @@ public class User {
     public void setGetUpdateAt(LocalDateTime getUpdateAt) {
         this.getUpdateAt = getUpdateAt;
     }
+
+    public List<CollectionEntry> getCollectionsEntries() {
+        return collectionsEntries;
+    }
+
+    public void setCollectionsEntries(List<CollectionEntry> collectionsEntries) {
+        this.collectionsEntries = collectionsEntries;
+    }
+}
+
+enum Role {
+    USER, ADMIN
 }

@@ -1,8 +1,8 @@
 package com.mtgcollector.repository;
 
-import com.mtgcollector.model.Card;
-import com.mtgcollector.model.CollectionEntry;
-import com.mtgcollector.model.User;
+import com.mtgcollector.entity.Card;
+import com.mtgcollector.entity.CollectionEntry;
+import com.mtgcollector.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,4 +35,6 @@ public interface CollectionEntryRepository extends JpaRepository<CollectionEntry
 
     // Find Collection entries by condition
     List<CollectionEntry> findByUserAndCondition(User user, String condition);
+
+    Optional<CollectionEntry> findByUserUsernameAndCard(String username, Card card);
 }

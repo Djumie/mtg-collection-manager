@@ -6,61 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-// For adding cards to collection
-public class AddCardToCollectionDto {
-    @NotNull(message = "Card ID is required")
-    private Long cardId;
-
-    @Min(value = 1, message = "Quantity must be at least 1")
-    private Integer quantity = 1;
-    private String condition = "Near Mint";
-    private String notes;
-
-    // Constructors
-
-    public AddCardToCollectionDto(Long cardId, Integer quantity, String condition, String notes) {
-        this.cardId = cardId;
-        this.quantity = quantity;
-        this.condition = condition;
-        this.notes = notes;
-    }
-
-    // Getters and Setters
-
-
-    public @NotNull(message = "Card ID is required") Long getCardId() {
-        return cardId;
-    }
-
-    public void setCardId(@NotNull(message = "Card ID is required") Long cardId) {
-        this.cardId = cardId;
-    }
-
-    public @Min(value = 1, message = "Quantity must be at least 1") Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(@Min(value = 1, message = "Quantity must be at least 1") Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public String getCondition() {
-        return condition;
-    }
-
-    public void setCondition(String condition) {
-        this.condition = condition;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-}
-
 // For collection entry responses
 public class CollectionEntryDto {
     private Long id;
@@ -76,7 +21,6 @@ public class CollectionEntryDto {
     private BigDecimal totalValue;  // quantity * cardMarketPrice
 
     // Constructors
-
     public CollectionEntryDto(Long id, Long cardId, String cardName, String cardType, int quantity, String condition, String notes) {
         this.id = id;
         this.cardId = cardId;
@@ -87,9 +31,7 @@ public class CollectionEntryDto {
         this.notes = notes;
     }
 
-
     // Getters and Setters
-
     public Long getId() {
         return id;
     }
@@ -176,5 +118,57 @@ public class CollectionEntryDto {
 
     public void setTotalValue(BigDecimal totalValue) {
         this.totalValue = totalValue;
+    }
+
+    // For adding cards to collection
+    public static class AddCardToCollectionDto {
+        @NotNull(message = "Card ID is required")
+        private Long cardId;
+
+        @Min(value = 1, message = "Quantity must be at least 1")
+        private Integer quantity = 1;
+        private String condition = "Near Mint";
+        private String notes;
+
+        // Constructors
+        public AddCardToCollectionDto(Long cardId, Integer quantity, String condition, String notes) {
+            this.cardId = cardId;
+            this.quantity = quantity;
+            this.condition = condition;
+            this.notes = notes;
+        }
+
+        // Getters and Setters
+        public @NotNull(message = "Card ID is required") Long getCardId() {
+            return cardId;
+        }
+
+        public void setCardId(@NotNull(message = "Card ID is required") Long cardId) {
+            this.cardId = cardId;
+        }
+
+        public @Min(value = 1, message = "Quantity must be at least 1") Integer getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(@Min(value = 1, message = "Quantity must be at least 1") Integer quantity) {
+            this.quantity = quantity;
+        }
+
+        public String getCondition() {
+            return condition;
+        }
+
+        public void setCondition(String condition) {
+            this.condition = condition;
+        }
+
+        public String getNotes() {
+            return notes;
+        }
+
+        public void setNotes(String notes) {
+            this.notes = notes;
+        }
     }
 }

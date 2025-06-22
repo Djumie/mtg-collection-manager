@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,13 +18,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    @Autowired
-    private JwtRequestFilter jwtRequestFilter;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -38,19 +38,20 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()   // CSRF protection not needed for stateless JWT APIs
-                .authorizeHttpRequests(auhtz -> auhtz
-                        .requestMatchers("/api/auth/**").permitAll()                    // Anyone can register/login
-                        .requestMatchers(HttpMethod.GET, "/api/cards/**").permitAll()   // Anyone can browse cards
-                        .requestMatchers("/api/collections/**").authenticated()         // Only logged-in users can manage collections
-                        .anyRequest().authenticated()                                           // All other endpóints require authentication
-                )
+        http.cors().and().csrf().disable()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);    // No server sessions
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authorizeRequests()
+                .antMatchers("/api/auth/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/cards/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/cards").hasRole("ADMIN")
+                .antMatchers("/api/collections/**").authenticated()
+                .anyRequest().authenticated();
 
-        // Add JWT filter before Spring Security's default authentication filter
-        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

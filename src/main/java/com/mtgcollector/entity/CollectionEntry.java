@@ -1,4 +1,4 @@
-package com.mtgcollector.model;
+package com.mtgcollector.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -22,15 +22,22 @@ public class CollectionEntry {
     @Column(nullable = false)               // How many copies the user owns
     private Integer quantity = 1;
 
-    @CreationTimestamp
+    @Column(name = "added_at")
     private LocalDateTime addedAt;          //When added to collection
+
+    @Column(columnDefinition = "TEXT")
     private String notes;                   // Personal notes about the card
     private String condition;               // Near Mint, Lightly Played, etc.
 
-    // Constructors
+    @PrePersist
+    protected void onCreate() {
+        addedAt = LocalDateTime.now();
+    }
 
-    public CollectionEntry(Long id, User user, Card card, Integer quantity) {
-        this.id = id;
+    // Constructors
+    public CollectionEntry() {}
+
+    public CollectionEntry(User user, Card card, Integer quantity) {
         this.user = user;
         this.card = card;
         this.quantity = quantity;

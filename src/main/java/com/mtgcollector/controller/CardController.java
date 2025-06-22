@@ -2,38 +2,33 @@ package com.mtgcollector.controller;
 
 import com.mtgcollector.dto.CardDto;
 import com.mtgcollector.service.CardService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.print.Pageable;
-
-import static jdk.internal.jrtfs.JrtFileAttributeView.AttrID.size;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/cards")
 @CrossOrigin(origins = "*")
 public class CardController {
 
-    @Autowired
-    private CardService cardService;
+    private final CardService cardService;
 
     @GetMapping
     public ResponseEntity<Page<CardDto>> getAllCards(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size),
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
 
-        Pageable pageable = PageRequest.of(page, size,
-                sortDir.equalsIgnoreCase("desc") ?
-                Sort.by(sortBy).descending() :
-                Sort.by(sortBy).ascending());
+        Pageable pageable = PageRequest.of(page, size
+        );
         Page<CardDto> cards = cardService.getAllCards(pageable);
         return ResponseEntity.ok(cards);
     }
@@ -70,12 +65,17 @@ public class CardController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CardDto> createCard(@RequestBody CardDto cardDto) {
+    public ResponseEntity<CardDto> createCard(@Valid @RequestBody CardDto.CreateCardDto createCardDto) {
         try {
-            CardDto createdCard = cardService.createCard(cardDto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdCard);
+            CardDto card = cardService.createCard(createCardDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(card);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    // Constructors
+    public CardController(CardService cardService) {
+        this.cardService = cardService;
     }
 }

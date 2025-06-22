@@ -1,21 +1,24 @@
 package com.mtgcollector.service;
 
+import com.mtgcollector.entity.User;
+import com.mtgcollector.repository.UserRepository;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     public User registerUser(String username, String email, String password) {
         // Check if username already exists
         if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username already exists: " + username);
+            throw new UsernameNotFoundException("Username already exists: " + username);
         }
 
         // Check if email already exists
@@ -40,5 +43,12 @@ public class UserService {
     public boolean validatePassword(String username, String password) {
         User user = findByUsername(username);
         return passwordEncoder.matches(password, user.getPassword());
+    }
+
+    // Single constructor
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 }

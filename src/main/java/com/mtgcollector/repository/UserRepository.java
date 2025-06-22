@@ -1,6 +1,6 @@
 package com.mtgcollector.repository;
 
-import com.mtgcollector.model.User;
+import com.mtgcollector.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

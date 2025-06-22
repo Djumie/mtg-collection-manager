@@ -1,8 +1,6 @@
 package com.mtgcollector.repository;
 
-import com.mtgcollector.model.Card;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.mtgcollector.entity.Card;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,8 +12,6 @@ import java.util.Optional;
 
 @Repository
 public interface CardRepository extends JpaRepository<Card, Long> {
-
-    Optional<Card> findByName(String name);
 
     // Find cards by name (case-insensitive partial matching)
     @Query("SELECT c FROM Card c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))")

@@ -14,7 +14,7 @@ spring:
       hibernate:
         ddl-auto: update # Creates/updates tables automatically
         naming:
-          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandard
+          physical-strategy: org.hibernate.boot.entity.naming.PhysicalNamingStrategyStandard
       show-sql: true       # Shows SQL in console
       properties:
         hibernate:

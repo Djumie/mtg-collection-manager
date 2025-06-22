@@ -1,4 +1,4 @@
-package com.mtgcollector.model;
+package com.mtgcollector.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -19,38 +19,47 @@ public class Card {
     @Column(nullable = false)
     private String name;
     private String type;
+
+    @Column(name = "mana_cost")
     private String manaCost;
+
+    @Column(name = "set_name")
     private String setName;
+
+    @Column(name = "image_url")
     private String imageUrl;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(precision = 10, scale = 2)
+    @Column(name = "market_price", precision = 10, scale = 2)
     private BigDecimal marketPrice;
 
     @CreationTimestamp
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     // One card can be in many collections
-    @OneToMany(mappedBy = "card", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<CollectionEntry> collectionEntries = new ArrayList<>();
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 
     // Constructors
 
-    private Card(String name, String type, String manaCost, String setName) {
+
+    public Card() {}
+
+    public Card(String name, String type, BigDecimal marketPrice) {
         this.name = name;
         this.type = type;
-        this.manaCost = manaCost;
-        this.setName = setName;
-    }
-
-    public static Card createCard(String name, String type, String manaCost, String setName) {
-        return new Card(name, type, manaCost, setName);
+        this.marketPrice = marketPrice;
     }
 
     // Getters and Setters
-
     public Long getId() {
         return id;
     }
