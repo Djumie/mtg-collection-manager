@@ -34,7 +34,7 @@ public class CollectionController {
             Authentication authentication) {
         // Get current user from JWT token
         String username = authentication.getName();
-        CollectionEntryDto entry = collectionService.addCardToCollection(username, cardId, dto);
+        CollectionEntryDto entry = collectionService.addCardToCollection(username, dto.getCardId(), dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(entry);   // 201 Content for successful creation
     }
 

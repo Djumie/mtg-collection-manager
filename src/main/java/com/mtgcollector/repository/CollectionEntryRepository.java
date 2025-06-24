@@ -21,6 +21,17 @@ public interface CollectionEntryRepository extends JpaRepository<CollectionEntry
     // Find a specific card in a user's collection
     Optional<CollectionEntry> findByUserAndCard(User user, Card card);
 
+    // Find a specific card in user's collection by card criteria
+    @Query("SELECT ce FROM CollectionEntry ce JOIN ce.card c JOIN ce.user u" +
+            "WHERE u.username = :username " +
+            "AND (:name IS NULL OR c.name LIKE %:name%) " +
+            "AND (:type IS NULL OR c.type = :type) " +
+            "AND (:setName IS NULL OR c.setName = :setName)")
+    List<CollectionEntry> findUserCollectionByCardCriteria(@Param("username") String username,
+                                                @Param("name") String name,
+                                                @Param("type") String type,
+                                                @Param("setName") String setName);
+
     // Count how many different cards a user owns
     @Query("SELECT COUNT(DISTINCT c.card) FROM CollectionEntry c WHERE c.user = :user")
     Long countDistinctCardsByUser(@Param("user") User user);
@@ -37,4 +48,6 @@ public interface CollectionEntryRepository extends JpaRepository<CollectionEntry
     List<CollectionEntry> findByUserAndCondition(User user, String condition);
 
     Optional<CollectionEntry> findByUserUsernameAndCard(String username, Card card);
+
+    Optional<CollectionEntry> findByUser_UsernameAndCard_Id(String username, Long cardId);
 }
